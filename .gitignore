@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Ignorar archivos de configuración de Windows/Drive
+desktop.ini
