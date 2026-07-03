@@ -219,3 +219,15 @@ __marimo__/
 
 # Ignorar archivos de configuración de Windows/Drive
 desktop.ini
+
+# Historial y datos locales de R
+.Rhistory
+.RData
+.Ruserdata
+
+# Configuraciones de Windows / Mac
+Thumbs.db
+desktop.ini
+
+# Archivos temporales de RStudio
+.Rproj.user/
