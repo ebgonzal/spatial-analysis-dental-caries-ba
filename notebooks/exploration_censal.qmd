@@ -1,0 +1,106 @@
+---
+title: "Exploration censal date"
+format: html
+editor: visual
+---
+
+
+### Visualization  (households indicators) 
+
+Analize dispersion and outliers for household indicators and explore atypical values calculated by census radius. 
+
+```{r}
+#| label: boxplots-households indicators
+#| fig-width: 12
+#| fig-height: 6
+#| message: false
+#| warning: false
+
+# Boxplots  for each household indicator
+sequence <- list(2:11, 12:21, 22:31, 32:40)
+
+for(seq in sequence) {
+  par(mfrow = c(2, 5), mar = c(5, 4, 2, 1))
+  for(i in seq) {
+    boxplot(df_hogares_pct[[i]], 
+            main = names(df_hogares_pct)[i], 
+            col = "lightblue",
+            ylab = "Valor (%)")
+  }
+  # Histograms for each household indicator
+  for(j in seq) {
+    hist(df_hogares_pct[[j]], 
+         main = names(df_hogares_pct)[j], 
+         col = "steelblue", 
+         border = "white",
+         xlab = "Percentage (%)", 
+         ylab = "Frequency")        
+  }
+  cat("\n\n")
+  Sys.sleep(0.5)  # pause
+  par(mfrow = c(1, 1))
+}
+
+```
+
+### Key Insights & Data Quality Assessment (Household Indicators)
+
+A comprehensive evaluation of the 40 household variables at the census radius level in CABA confirms distinct structural patterns that align with the spatial and socio-demographic segregation of the city. No structural missing values or anomalies were detected across the indicators, confirming the data integrity of the extraction pipeline.
+
+The entire dataset can be categorized into three major geometric and structural behaviors:
+
+*   **Structural Zero-Inflation & Right Skewness:** Severe vulnerability metrics (e.g., `hogares_sin_cloaca`, `hogares_sin_caneria`, `desague_a_hoyo`, `carbon_o_lena`), alongside specific socio-economic features (e.g., `servicio_domestico`, `jefe_nacido_en_pais_limit`, and critical crowding), are heavily zero-inflated. The histograms confirm that the vast majority of census radii report values near 0%. The long right-side tails and points flagged as outliers by the boxplots are non-erroneous; they represent true spatial segregation and localized socio-economic realities in CABA (such as informal settlements or high-income clusters). These rows must be preserved for spatial analysis.
+*   **Socio-Economic Polarization (High Variance):** Housing tenure (`propietarios` vs. `inquilinos`) and higher educational attainment (`jefes_con_universitaria`) present high spatial variance, sweeping wide percentage ranges across different census tracts. This high variance reflects the deep structural division between different zones of the city (e.g., northern vs. southern communes) and confirms their strong potential as spatial predictors for geographic clustering.
+*   **Demographic Stabilization & Left Skewness:** Technology adoption (`hogares_con_computadora`) shows a predominantly left-skewed high penetration rate (median above 80%), highlighting specific geographic areas with digital gaps. Conversely, household size indicators (`hogares_de_1_persona` to `4_personas`) and gender metrics (`jefatura_femenina`) conform to stable, bell-shaped normal distributions. Single and two-person households dominate CABA's urban landscape, while larger households (`5_o_mas_personas`) are restricted to specific peripheral sectors.
+
+*   **Analytical & Modeling Implications:** The statistical outliers flagged across the coordinates are structural rather than anomalous, meaning that data trimming or outlier removal would result in a loss of critical geographic information. While variables displaying normal geometry are suitable for direct introduction into linear models, the structural deficit and zero-inflated metrics require robust, non-parametric spatial approaches or stabilization techniques to mitigate variance inflation in lower-populated tracts.
+
+### Visualization  (population indicators) 
+
+Analyze dispersion and outliers for individual indicators and explore atypical values calculated by census radius.
+
+```{r}
+#| label: boxplots-population indicators
+#| fig-width: 12
+#| fig-height: 6
+#| message: false
+#| warning: false
+
+# Boxplots  for each population indicator
+sequence <- list(2:11, 12:21, 22:31, 32:40, 41:50, 51:60)
+
+for(seq in sequence) {
+  par(mfrow = c(2, 5), mar = c(5, 4, 2, 1))
+  for(i in seq) {
+    boxplot(df_personas_pct[[i]], 
+            main = names(df_personas_pct)[i], 
+            col = "lightblue",
+            ylab = "Valor (%)")
+  }
+  # Histograms for each population indicator
+  for(j in seq) {
+    hist(df_personas_pct[[j]], 
+         main = names(df_personas_pct)[j], 
+         col = "steelblue", 
+         border = "white",
+         xlab = "Percentage (%)", 
+         ylab = "Frequency")        
+  }
+  cat("\n\n")
+  Sys.sleep(0.5)  # pause
+  par(mfrow = c(1, 1))
+}
+
+```
+
+
+### Key Insights & Data Quality Assessment (Individual Indicators)
+
+A comprehensive evaluation of the individual and population variables at the census radius level in CABA reveals specific statistical distributions. No missing values or computational anomalies were detected, confirming data integrity across the extraction pipeline. 
+
+The dataset features two primary distribution behaviors:
+
+*   **Symmetric Target Population Geometry:** Variables capturing the age structure for children and adolescents (e.g., `poblacion_de_0_a_17_anos`, and cohorts `0_a_3`, `4_a_5`, and `6_a_12_anos`) present stable, bell-shaped normal distributions. The median percentages remain tightly bounded across the observations (e.g., between 1.5% and 3% for the 4-5 age bracket). The mathematical outliers flagged in these distributions represent specific census radii with higher densities of the younger demographic cohorts.
+*   **High Skewness & Variance in Socio-Economic Proxies:** The variable `solo_salud_publica` exhibits a heavily right-skewed distribution, with a massive concentration of observations near the lower percentage bounds and a dense trail of mathematical outliers stretching toward high values. Adult educational metrics show high statistical variance; while `18_y_mas_con_primaria_completa` is highly concentrated near the upper limits, `18_y_mas_con_universitario` spans from under 10% to over 50% across different rows. Conversely, indicators tracking educational deficits (such as young cohorts `sin_secundaria`) display a sharp right-skewed zero-inflation.
+
+*   **Analytical & Modeling Implications:** The outliers present in the population datasets represent true statistical variance within the census data rather than collection errors, meaning no data trimming or row removal is required. Because the target age cohorts follow normal distributions, they meet the geometric assumptions for parametric baselines. However, because health coverage deficits (`solo_salud_publica`) and educational gaps are highly skewed and zero-inflated, the modeling phase requires statistical transformations or non-parametric modeling techniques to handle non-normal distributions and prevent localized variance inflation.

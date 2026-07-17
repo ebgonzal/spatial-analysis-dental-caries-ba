@@ -45,3 +45,6 @@ dir.create(here("data", "processed"), showWarnings = FALSE)
 # Save porcentages dataframes as RDS files
 write_rds(df_hogares_pct, here("data", "processed", "df_hogares_pct.rds"))
 write_rds(df_personas_pct, here("data", "processed", "df_personas_pct.rds"))
+
+
+
