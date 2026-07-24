@@ -1,0 +1,160 @@
+---
+title: "Exploratory Correlation Analysis at Census Radius Level"
+format: html
+execute:
+  echo: true
+---
+
+
+### Exploratory Correlation Analysis (Household Indicators)
+
+Initial correlation analysis of the household and population census dataset to examine its internal structure and identify highly redundant variables.
+
+### Correlation matrix (household indicators)
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+num_cols <- df_hogares_pct[2:40]
+hogares_cor_mat <- cor(num_cols, use = "pairwise.complete.obs")
+
+# Show dimensions
+cat("Dimensiones de la matriz de correlación:", dim(hogares_cor_mat), "\n")
+```
+
+### Correlation matrix
+
+```{r}
+hogares_cor_mat[1:min(6, nrow(hogares_cor_mat)), 1:min(6, ncol(hogares_cor_mat))]
+```
+
+### Heatmap of correlation
+
+```{r}
+# Compute hierarchical clustering order so strongly correlated variables are plotted close together
+ord <- hclust(as.dist(1 - abs(hogares_cor_mat)))$order
+
+# Reorder variable names according to clustering
+vars_ord <- rownames(hogares_cor_mat)[ord]
+
+# Convert correlation matrix to long format for ggplot and set factor levels
+cor_df <- as.data.frame(as.table(hogares_cor_mat)) |>
+  mutate(
+    var1 = factor(Var1, levels = vars_ord), 
+    var2 = factor(Var2, levels = vars_ord)  
+  )
+
+# Draw heatmap
+cor_df |> ggplot(aes(x = var1, y = var2, fill = Freq)) +
+  geom_raster() +
+  # Blue = negative correlation, white = 0, red = positive correlation
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, limits = c(-1, 1)) +
+  labs(x = NULL, y = NULL, fill = "Correlation") +
+  coord_fixed() + 
+  theme_minimal(base_size = 10) +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 6),
+    axis.text.y = element_text(size = 6),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+```
+
+### Pairs of variables with highest correlation
+
+```{r}
+cor_df <- as.data.frame(as.table(hogares_cor_mat))
+colnames(cor_df) <- c("var1", "var2", "corr")
+cor_df <- cor_df |> mutate(abs_corr = abs(corr))
+
+cor_df |> 
+  filter(var1 != var2) |> 
+  arrange(desc(abs_corr)) |> 
+  slice_head(n = 12)
+```
+
+### Key Insights (Household Indicators)
+
+Strong variable pairs:
+hogares_sin_caneria_de_agua_en_la_vivienda ↔ hogares_sin_sistema_de_boton_cadena_o_mochila_para_limpieza_del_inodoro: 1.00
+hogares_de_personas_solas ↔ hogares_de_1_persona: 0.999
+hogares_con_jefes_con_primaria_completa_o_secundaria_incompleto ↔ hogares_con_jefes_con_secundaria_completa_o_mas: -0.978
+hogares_propietarios_de_la_vivienda ↔ hogares_inquilinos_de_la_vivienda: -0.959
+hogares_con_computadora ↔ hogares_con_jefes_con_secundaria_completa_o_mas: 0.939
+hogares_con_hacinamiento_mas_de_2_personas_por_cuarto ↔ hogares_con_hacinamiento_critico_mas_de_3_personas_por_cuarto: 0.919
+
+
+
+# Exploratory Correlation Analysis (Population Indicators)
+
+This section repeats the same correlation workflow using the person-level dataset `df_personas_pct`.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Define the personal indicators correlation dataset from df_personas_pct using columns 2 through 60.
+# Keep only the numeric columns in that range before computing correlations.
+df_personas_pct_cor <- df_personas_pct[2:60] |> select(where(is.numeric))
+
+personas_cor_mat <- cor(df_personas_pct_cor, use = "pairwise.complete.obs")
+
+cat("Dimensions of the personal indicators correlation matrix:", dim(personas_cor_mat), "\n")
+```
+
+### Correlation matrix preview
+
+```{r}
+personas_cor_mat[1:min(6, nrow(personas_cor_mat)), 1:min(6, ncol(personas_cor_mat))]
+```
+
+### Correlation heatmap
+
+```{r}
+ord_personas <- hclust(as.dist(1 - abs(personas_cor_mat)))$order
+vars_ord_personas <- rownames(personas_cor_mat)[ord_personas]
+cor_df_personas <- as.data.frame(as.table(personas_cor_mat)) |>
+  mutate(
+    var1 = factor(Var1, levels = vars_ord_personas),
+    var2 = factor(Var2, levels = vars_ord_personas)
+  )
+
+cor_df_personas |> ggplot(aes(x = var1, y = var2, fill = Freq)) +
+  geom_raster() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, limits = c(-1, 1)) +
+  labs(x = NULL, y = NULL, fill = "Correlation") +
+  coord_fixed() +
+  theme_minimal(base_size = 10) +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 6),
+    axis.text.y = element_text(size = 6),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+```
+
+### Top correlated population variable pairs
+
+```{r}
+cor_df_personas <- as.data.frame(as.table(personas_cor_mat))
+colnames(cor_df_personas) <- c("var1", "var2", "corr")
+cor_df_personas <- cor_df_personas |> mutate(abs_corr = abs(corr))
+
+cor_df_personas |> 
+  filter(var1 != var2) |> 
+  arrange(desc(abs_corr)) |> 
+  slice_head(n = 12)
+```
+
+### Key Insights (Population Indicators)
+
+- The population-level data contains very strong relationships between these variable pairs:
+  - `poblacion_de_18_anos_y_mas` ↔ `poblacion_de_0_a_17_anos`: -1.000
+  - `total_de_mujeres_en_hogares_familiares` ↔ `total_de_varones_en_hogares_familiares`: -1.000
+  - `personas_que_reciben_jubilacion_65_anos_y_mas` ↔ `personas_que_reciben_jubilacion_o_pension_65_anos_y_mas`: 0.9988
+  - `poblacion_de_13_a_17_sin_secundaria_completa` ↔ `poblacion_de_13_a_17_anos`: 0.9971
+  - `poblacion_de_6_a_12_que_asiste` ↔ `poblacion_de_6_a_12_anos`: 0.9961
+  - `obra_social_o_prepaga_incluye_pami` ↔ `solo_salud_publica`: -0.9960
+
+
